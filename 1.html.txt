@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calcul de VMA</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        input {
+            display: block;
+            margin-bottom: 10px;
+        }
+        button {
+            margin-right: 10px;
+        }
+        #controlSection {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Calcul de la VMA</h1>
+    <input type="text" id="runnerName" placeholder="Nom du coureur" required>
+    <input type="text" id="observerName" placeholder="Nom de l'observateur" required>
+    <input type="number" id="runnerVMA" placeholder="VMA du coureur" required step="0.5">
+    <input type="number" id="targetPercentage" placeholder="Ex: 50" required step="0.5">
+    <input type="number" id="duration" min="1.5" step="1.5" value="3">
+    <button class="btn-start" onclick="startRace()">Démarrer</button>
+    <button class="btn-plot" onclick="addPlot()" style="display:none;">Passer un plot</button>
+    <button class="btn-download" onclick="downloadResults()" style="display:none;">Télécharger</button>
+    <button class="btn-reset" onclick="reset()" style="display:none;">Réinitialiser</button>
+
+    <div id="controlSection" style="display:none;">
+        <p>Temps écoulé : <span id="timeElapsed">0:00</span></p>
+        <p>Compte à rebours : <span id="countdown">5</span> secondes</p>
+        <p>Plots passés : <span id="plotCount">0</span></p>
+        <div id="resultsLog"></div>
+        <div id="finalSummary" style="display:none;"></div>
+    </div>
+
+    <div id="authorSection" style="display:none; margin-top: 20px;">
+        <p>Auteur : Jérôme BARLETTA</p>
+        <button onclick="window.open('http://bjerome.eklablog.com/accueil-c30088056', '_blank')">Accéder au blog</button>
+    </div>
+
+    <script>
+        let duration, interval, countdownInterval, timeElapsed = 0, plotCount = 0, results = [];
+
+        function startRace() {
+            // Initialisation de la course
+            duration = parseFloat(document.getElementById("duration").value) * 60;
+            timeElapsed = 0;
+            plotCount = 0;
+            results = [];
+            document.getElementById("resultsLog").innerHTML = '';
+
+            // Affichage de la section de contrôle
+            document.getElementById("controlSection").style.display = 'block';
+            document.querySelector('.btn-plot').style.display = 'inline';
+
+            // Configuration du timer
+            interval = setInterval(updateTime, 1000);
+        }
+
+        function updateTime() {
+            timeElapsed++;
+            document.getElementById("timeElapsed").textContent = formatTime(timeElapsed);
+
+            if (timeElapsed % 90 === 0) {
+                calculateVMA();
+                startCountdown();
+            }
+
+            if (timeElapsed >= duration) {
+                clearInterval(interval);
+                alert("Course terminée !");
+                document.querySelector('.btn-download').style.display = 'inline';
+                document.querySelector('.btn-reset').style.display = 'inline';
+                document.getElementById("authorSection").style.display = 'block'; // Affiche l'auteur et le bouton du blog
+                clearInterval(countdownInterval);
+            }
+        }
+
+        function startCountdown() {
+            let countdown = 5;
+            document.getElementById("countdown").textContent = countdown;
+
+            clearInterval(countdownInterval);
+            countdownInterval = setInterval(function() {
+                countdown--;
+                document.getElementById("countdown").textContent = countdown;
+
+                if (countdown <= 0) {
+                    clearInterval(countdownInterval);
+                }
+            }, 1000);
+        }
+
+        function addPlot() {
+            plotCount++;
+            document.getElementById("plotCount").textContent = plotCount;
+        }
+
+        function calculateVMA() {
+            const runnerVMA = parseFloat(document.getElementById("runnerVMA").value);
+            const targetPercentage = parseFloat(document.getElementById("targetPercentage").value) / 100;
+            const targetVMA = runnerVMA * targetPercentage; // Calculer le VMA cible
+            const requiredPlots = targetVMA * 2; // Calculer le nombre de plots requis
+
+            results.push(`Période: ${formatTime(timeElapsed)}, Plots passés: ${plotCount}, Différence: ${plotCount - requiredPlots}`);
+            document.getElementById("resultsLog").innerHTML += `<p>Période: ${formatTime(timeElapsed)}, Plots passés: ${plotCount}, Différence: ${plotCount - requiredPlots}</p>`;
+        }
+
+        function downloadResults() {
+            const blob = new Blob([document.getElementById("resultsLog").innerText], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = 'resultats_vma.txt';
+            link.click();
+        }
+
+        function reset() {
+            clearInterval(interval);
+            clearInterval(countdownInterval);
+            timeElapsed = 0;
+            plotCount = 0;
+            results = [];
+            document.getElementById("timeElapsed").textContent = '0:00';
+            document.getElementById("countdown").textContent = '5';
+            document.getElementById("plotCount").textContent = '0';
+            document.getElementById("resultsLog").innerHTML = '';
+            document.getElementById("controlSection").style.display = 'none';
+            document.getElementById("authorSection").style.display = 'none'; // Masquer la section de l'auteur
+            document.querySelector('.btn-plot').style.display = 'none';
+            document.querySelector('.btn-download').style.display = 'none';
+            document.querySelector('.btn-reset').style.display = 'none';
+        }
+
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+    </script>
+</body>
+</html>
