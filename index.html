@@ -10,37 +10,55 @@
       --blue:#2563eb;--blue-light:#3b82f6;--red:#ef4444;--green:#10b981;--violet:#8b5cf6;
       --radius:12px;
     }
+    [data-theme="dark"]{
+      --ink:#f8fafc;--muted:#cbd5e1;--border:#334155;--bg:#0f172a;
+      --blue:#60a5fa;--blue-light:#60a5fa;--red:#f87171;--green:#34d399;--violet:#a78bfa;
+    }
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;background:var(--bg);color:var(--ink);line-height:1.5}
     h1,h2{font-weight:600}
     h1{font-size:clamp(26px,4vw,34px);color:var(--blue)}
     h2{font-size:18px;margin-bottom:8px;color:var(--violet)}
     p{color:var(--muted);font-size:15px}
+
+    /* Accueil */
     .screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;background:linear-gradient(135deg,var(--blue-light),var(--violet));color:#fff}
     .screen h1{color:#fff}
     .screen p{color:#e0f2fe}
+
+    /* UI */
     .btn{appearance:none;border:none;cursor:pointer;font-weight:500;border-radius:var(--radius);padding:10px 18px;font-size:14px;transition:.2s;display:inline-flex;gap:6px;align-items:center;box-shadow:0 2px 4px rgba(0,0,0,0.08)}
     .btn.blue{background:var(--blue);color:#fff}
     .btn.red{background:var(--red);color:#fff}
     .btn.green{background:var(--green);color:#fff}
     .btn.violet{background:var(--violet);color:#fff}
     .btn.ghost{background:#fff;border:1px solid var(--border);color:var(--ink)}
+    [data-theme="dark"] .btn.ghost{background:#0f172a;color:var(--ink);border-color:var(--border)}
     .btn:hover{opacity:.9;transform:translateY(-1px)}
+
     .wrap{min-height:100vh;display:flex;flex-direction:column}
     header{background:var(--blue);color:#fff;position:sticky;top:0;z-index:10}
     header .bar{max-width:960px;margin:0 auto;padding:14px;display:flex;justify-content:space-between;align-items:center}
     header strong{font-size:16px}
+
     main{flex:1;max-width:960px;margin:0 auto;display:grid;gap:20px;padding:24px;grid-template-columns:320px 1fr}
     section{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:0 4px 8px rgba(0,0,0,0.04)}
+    [data-theme="dark"] section{background:#1e293b}
+
     label{display:block;margin:10px 0 4px;font-size:13px;color:var(--muted)}
     input,select{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);font-size:14px;background:#fff}
+    [data-theme="dark"] input,[data-theme="dark"] select{background:#0f172a;color:var(--ink)}
     input:focus,select:focus{outline:none;border-color:var(--violet);box-shadow:0 0 0 2px rgba(139,92,246,.2)}
+
     .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
     .qr-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:14px;display:flex;flex-direction:column;gap:8px;box-shadow:0 2px 6px rgba(0,0,0,0.05)}
+    [data-theme="dark"] .qr-card{background:#1e293b}
     .qr-card h3{color:var(--blue);font-size:15px;margin:0}
     .qr-img{display:block;margin:auto;border:1px solid var(--border);border-radius:8px;background:#fff;max-width:100%}
     .meta{font-size:12px;color:var(--muted)}
+
     footer{border-top:1px solid var(--border);padding:12px;text-align:center;font-size:13px;color:var(--muted);background:#f1f5f9}
+    [data-theme="dark"] footer{background:#1e293b}
   </style>
 </head>
 <body>
@@ -49,6 +67,9 @@
     <h1>✨ Générateur de QR Codes</h1>
     <p>Créez, organisez et partagez vos QR Codes simplement.<br>Tout reste enregistré <strong>en local</strong> sur cet appareil.</p>
     <button class="btn violet" onclick="goApp()">Entrer dans l'application</button>
+    <div style="margin-top:12px">
+      <button class="btn violet" onclick="window.open('aide.html','_blank')">Aide</button>
+    </div>
   </div>
 
   <!-- Application principale -->
@@ -61,6 +82,8 @@
             <button class="btn ghost" id="importJsonBtn">Importer</button>
             <button class="btn ghost" id="exportJsonBtn">Exporter</button>
             <button class="btn red" id="clearAllBtn">Effacer</button>
+            <button class="btn violet" onclick="window.open('aide.html','_blank')">Aide</button>
+            <button class="btn ghost" onclick="toggleTheme()">🌙/☀️</button>
             <button class="btn ghost" onclick="goHome()">Accueil</button>
           </div>
         </div>
@@ -103,6 +126,7 @@
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn green" id="zipAllBtn">Tout (ZIP)</button>
               <button class="btn violet" id="printSheetBtn">Imprimer</button>
+              <button class="btn blue" id="shareAllBtn">Partager tout</button>
             </div>
           </div>
           <div id="gallery" class="gallery"></div>
@@ -136,6 +160,7 @@
     const clearAllBtn=document.getElementById('clearAllBtn');
     const statusPill=document.getElementById('statusPill');
     const printSheetBtn=document.getElementById('printSheetBtn');
+    const shareAllBtn=document.getElementById('shareAllBtn');
     const STORAGE_KEY='qr_store_v1';
 
     function isValidUrl(u){try{new URL(u);return true}catch{return false}}
@@ -143,27 +168,143 @@
     function loadStore(){try{const raw=localStorage.getItem(STORAGE_KEY);return raw?JSON.parse(raw):[]}catch(e){statusPill.textContent='Stockage local indisponible';return[]}}
     function saveStore(list){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(list))}catch(e){}}
 
-    function render(){const items=loadStore();gallery.innerHTML='';if(!items.length){emptyState.hidden=false;return}emptyState.hidden=true;for(const item of items){gallery.appendChild(renderCard(item))}}
-    function renderCard(item){const card=document.createElement('div');card.className='qr-card';const h3=document.createElement('h3');h3.textContent=item.label||'QR';const date=document.createElement('div');date.className='meta';date.textContent=new Date(item.createdAt).toLocaleString();const img=document.createElement('img');img.className='qr-img';img.src=item.png;img.alt='QR';const link=document.createElement('div');link.className='meta';link.textContent=item.url;const row=document.createElement('div');row.style.display='flex';row.style.flexWrap='wrap';row.style.gap='6px';const dl=btn('PNG',()=>downloadPng(item));const share=btn('Partager',()=>sharePng(item));const copy=btn('Copier URL',()=>navigator.clipboard?.writeText(item.url));const del=btn('Supprimer',()=>deleteItem(item.id),'red');row.append(dl,share,copy,del);card.append(h3,date,img,link,row);return card}
-    function btn(txt,fn,variant){const b=document.createElement('button');b.className='btn '+(variant||'ghost');b.textContent=txt;b.onclick=fn;return b}
+    function render(){
+      const items=loadStore(); gallery.innerHTML='';
+      if(!items.length){ emptyState.hidden=false; return; }
+      emptyState.hidden=true;
+      for(const item of items){ gallery.appendChild(renderCard(item)); }
+    }
 
-    function makeQR(text,size,margin){const tmp=document.createElement('div');new QRCode(tmp,{text,width:size,height:size,margin:Number(margin)||0});const canvas=tmp.querySelector('canvas');const dataUrl=canvas?canvas.toDataURL('image/png'):'';tmp.remove();return dataUrl}
-    function addItem({label,url,size,margin}){const items=loadStore();const id=crypto.randomUUID?crypto.randomUUID():Date.now();const png=makeQR(url,size,margin);const createdAt=Date.now();items.unshift({id,label,url,size,margin,png,createdAt});saveStore(items);render()}
-    function deleteItem(id){const items=loadStore().filter(x=>x.id!==id);saveStore(items);render()}
-    function downloadPng(item){const a=document.createElement('a');a.download=(item.label||'qr')+'.png';a.href=item.png;a.click()}
-    async function sharePng(item){try{const res=await fetch(item.png);const blob=await res.blob();const file=new File([blob],(item.label||'qr')+'.png',{type:'image/png'});if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:item.label||'QR',text:item.url})}else{window.location.href=`mailto:?subject=QR&body=${encodeURIComponent(item.url)}`}}catch(e){alert('Partage non supporté')}}
-    async function zipAll(){const items=loadStore();if(!items.length)return;const zip=new JSZip();for(const it of items){zip.file((it.label||'qr')+'.png',it.png.split(',')[1],{base64:true})}const blob=await zip.generateAsync({type:'blob'});saveAs(blob,'qr-codes.zip')}
-    function exportJson(){const blob=new Blob([JSON.stringify(loadStore(),null,2)],{type:'application/json'});const a=document.createElement('a');a.download='qr-store.json';a.href=URL.createObjectURL(blob);a.click()}
-    function importJson(){const input=document.createElement('input');input.type='file';input.accept='application/json';input.onchange=()=>{const file=input.files?.[0];if(!file)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d))throw 0;saveStore(d);render()}catch{alert('Fichier invalide')}};r.readAsText(file)};input.click()}
-    function clearAll(){if(confirm('Tout supprimer ?')){localStorage.removeItem(STORAGE_KEY);render()}}
-    function printSheet(){const items=loadStore();if(!items.length){alert('Aucun QR');return}const w=window.open('', '_blank');const html=`<!DOCTYPE html><html><head><meta charset='utf-8'><title>Print</title><style>body{font-family:sans-serif;margin:20px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}.cell{text-align:center;border:1px solid #ddd;padding:10px;border-radius:8px}img{max-width:100%}</style></head><body><div class='grid'>${items.map(it=>`<div class='cell'><img src='${it.png}'/><div>${it.label||''}</div><div style='font-size:11px;color:#555'>${it.url}</div></div>`).join('')}</div><script>window.onload=()=>print()<\/script></body></html>`;w.document.write(html)}
+    function renderCard(item){
+      const card=document.createElement('div'); card.className='qr-card';
+      const h3=document.createElement('h3'); h3.textContent=item.label||'QR';
+      const date=document.createElement('div'); date.className='meta'; date.textContent=new Date(item.createdAt).toLocaleString();
+      const img=document.createElement('img'); img.className='qr-img'; img.src=item.png; img.alt='QR';
+      const link=document.createElement('div'); link.className='meta'; link.textContent=item.url;
+      const row=document.createElement('div'); row.style.display='flex'; row.style.flexWrap='wrap'; row.style.gap='6px';
+      const dl=btn('PNG',()=>downloadPng(item));
+      const share=btn('Partager',()=>sharePng(item));
+      const copy=btn('Copier URL',()=>navigator.clipboard?.writeText(item.url));
+      const del=btn('Supprimer',()=>deleteItem(item.id),'red');
+      row.append(dl,share,copy,del);
+      card.append(h3,date,img,link,row);
+      return card;
+    }
 
-    genBtn.onclick=()=>{const url=normalizeUrl(urlInput.value);if(!isValidUrl(url)){alert('URL invalide');return}addItem({label:labelInput.value.trim(),url,size:Number(sizeSelect.value),margin:Number(marginSelect.value)});labelInput.value='';urlInput.value=''}
-    urlInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();genBtn.click()}})
-    zipAllBtn.onclick=zipAll;exportJsonBtn.onclick=exportJson;importJsonBtn.onclick=importJson;clearAllBtn.onclick=clearAll;printSheetBtn.onclick=printSheet;render()
-  })()
-  function goApp(){document.getElementById('home').style.display='none';document.getElementById('app').style.display='block'}
-  function goHome(){document.getElementById('app').style.display='none';document.getElementById('home').style.display='flex'}
+    function btn(txt,fn,variant){ const b=document.createElement('button'); b.className='btn '+(variant||'ghost'); b.textContent=txt; b.onclick=fn; return b; }
+
+    function makeQR(text,size,margin){
+      const tmp=document.createElement('div');
+      new QRCode(tmp,{text,width:size,height:size,margin:Number(margin)||0});
+      const canvas=tmp.querySelector('canvas'); const dataUrl=canvas?canvas.toDataURL('image/png'):'';
+      tmp.remove(); return dataUrl;
+    }
+
+    function addItem({label,url,size,margin}){
+      const items=loadStore();
+      const id=crypto.randomUUID?crypto.randomUUID():Date.now();
+      const png=makeQR(url,size,margin);
+      const createdAt=Date.now();
+      items.unshift({id,label,url,size,margin,png,createdAt});
+      saveStore(items); render();
+    }
+
+    function deleteItem(id){
+      const items=loadStore().filter(x=>x.id!==id);
+      saveStore(items); render();
+    }
+
+    function downloadPng(item){
+      const a=document.createElement('a');
+      const safe=(item.label||'qr').replace(/[^a-z0-9_-]+/gi,'-').replace(/-+/g,'-');
+      a.download=`${safe||'qr'}_${item.size||256}.png`; a.href=item.png; a.click();
+    }
+
+    async function sharePng(item){
+      try{
+        const res=await fetch(item.png); const blob=await res.blob();
+        const file=new File([blob],(item.label||'qr')+'.png',{type:'image/png'});
+        if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+          await navigator.share({files:[file],title:item.label||'QR',text:item.url});
+        }else{
+          window.location.href=`mailto:?subject=QR&body=${encodeURIComponent(item.url)}`;
+        }
+      }catch(e){ alert('Partage non supporté'); }
+    }
+
+    async function zipAll(){
+      const items=loadStore(); if(!items.length) return;
+      const zip=new JSZip();
+      for(const it of items){ zip.file((it.label||'qr')+'.png', it.png.split(',')[1], {base64:true}); }
+      const blob=await zip.generateAsync({type:'blob'}); saveAs(blob,'qr-codes.zip');
+    }
+
+    function exportJson(){
+      const blob=new Blob([JSON.stringify(loadStore(),null,2)],{type:'application/json'});
+      const a=document.createElement('a'); a.download='qr-store.json'; a.href=URL.createObjectURL(blob); a.click();
+    }
+
+    function importJson(){
+      const input=document.createElement('input'); input.type='file'; input.accept='application/json';
+      input.onchange=()=>{
+        const file=input.files?.[0]; if(!file) return;
+        const r=new FileReader();
+        r.onload=()=>{ try{ const d=JSON.parse(r.result); if(!Array.isArray(d)) throw 0; saveStore(d); render(); } catch{ alert('Fichier invalide'); } };
+        r.readAsText(file);
+      };
+      input.click();
+    }
+
+    function clearAll(){
+      if(confirm('Tout supprimer ?')){ localStorage.removeItem(STORAGE_KEY); render(); }
+    }
+
+    function printSheet(){
+      const items=loadStore(); if(!items.length){ alert('Aucun QR'); return; }
+      const w=window.open('', '_blank');
+      const html=`<!DOCTYPE html><html><head><meta charset='utf-8'><title>Print</title>
+        <style>body{font-family:sans-serif;margin:20px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}.cell{text-align:center;border:1px solid #ddd;padding:10px;border-radius:8px}img{max-width:100%}</style></head>
+        <body><div class='grid'>${items.map(it=>`<div class='cell'><img src='${it.png}'/><div>${it.label||''}</div><div style='font-size:11px;color:#555'>${it.url}</div></div>`).join('')}</div>
+        <script>window.onload=()=>print()<\/script></body></html>`;
+      w.document.write(html);
+    }
+
+    async function shareAll(){
+      const items=loadStore(); if(!items.length){ alert('Aucun QR à partager'); return; }
+      const zip=new JSZip(); for(const it of items){ zip.file((it.label||'qr')+'.png', it.png.split(',')[1], {base64:true}); }
+      const blob=await zip.generateAsync({type:'blob'});
+      const file=new File([blob], `qr-codes_${new Date().toISOString().slice(0,10)}.zip`, {type:'application/zip'});
+      if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+        try{ await navigator.share({ files:[file], title:'QR Codes', text:'Ensemble de QR codes' }); }catch(e){}
+      }else{
+        saveAs(blob, file.name);
+        alert('Partage système indisponible. Le ZIP a été téléchargé.');
+      }
+    }
+
+    // events
+    genBtn.onclick=()=>{
+      const url=normalizeUrl(urlInput.value);
+      if(!isValidUrl(url)){ alert('URL invalide'); return; }
+      addItem({label:labelInput.value.trim(),url,size:Number(sizeSelect.value),margin:Number(marginSelect.value)});
+      labelInput.value=''; urlInput.value='';
+    };
+    urlInput.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); genBtn.click(); }});
+    zipAllBtn.onclick=zipAll; exportJsonBtn.onclick=exportJson; importJsonBtn.onclick=importJson; clearAllBtn.onclick=clearAll; printSheetBtn.onclick=printSheet; shareAllBtn.onclick=shareAll;
+    render();
+  })();
+
+  // navigation & thème
+  function goApp(){ document.getElementById('home').style.display='none'; document.getElementById('app').style.display='block'; }
+  function goHome(){ document.getElementById('app').style.display='none'; document.getElementById('home').style.display='flex'; }
+  function toggleTheme(){
+    const html=document.documentElement;
+    const current=html.getAttribute('data-theme');
+    const next=current==='dark'?'light':'dark';
+    html.setAttribute('data-theme',next);
+    try{ localStorage.setItem('qr_theme',next); }catch(e){}
+  }
+  ;(function(){ try{ const t=localStorage.getItem('qr_theme'); if(t){ document.documentElement.setAttribute('data-theme',t); } }catch(e){} })();
   </script>
 </body>
 </html>
