@@ -2,45 +2,62 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Aide – Générateur de QR Codes</title>
+  <title>Aide – CreaQrcode</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
     :root {
       --ink:#1e293b;--muted:#64748b;--border:#e2e8f0;--bg:#f8fafc;
       --blue:#2563eb;--violet:#8b5cf6;--radius:12px;
     }
+    [data-theme="dark"] {
+      --ink:#f8fafc;--muted:#cbd5e1;--border:#334155;--bg:#0f172a;
+      --blue:#60a5fa;--violet:#a78bfa;
+    }
     body {
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
       background:var(--bg);color:var(--ink);line-height:1.6;
-      padding:20px;max-width:900px;margin:auto;
+      padding:20px;max-width:900px;margin:auto;min-height:100vh;
+      display:flex;flex-direction:column;
     }
-    h1 {
-      font-size:28px;margin-bottom:16px;
-      color:var(--blue);text-align:center;
-    }
-    h2 {
-      font-size:20px;margin:20px 0 10px;
-      color:var(--violet);
-    }
-    p {margin:8px 0;color:var(--ink);}
-    ul {margin:8px 0 16px 20px;}
-    li {margin-bottom:6px;}
+    h1 {font-size:28px;margin-bottom:16px;color:var(--blue);text-align:center}
+    h2 {font-size:20px;margin:20px 0 10px;color:var(--violet)}
+    p {margin:8px 0;color:var(--ink)}
+    ul {margin:8px 0 16px 20px}
+    li {margin-bottom:6px}
     .card {
       background:#fff;border:1px solid var(--border);
       border-radius:var(--radius);padding:18px;margin-bottom:20px;
       box-shadow:0 2px 6px rgba(0,0,0,0.05);
     }
+    [data-theme="dark"] .card {background:#1e293b}
     .back {
-      display:inline-block;margin:30px auto 0;
-      padding:12px 18px;background:var(--violet);color:#fff;
-      border-radius:var(--radius);text-decoration:none;font-weight:600;
-      transition:.2s;
+      display:inline-block;margin:30px auto 0;padding:12px 18px;
+      background:var(--violet);color:#fff;border-radius:var(--radius);
+      text-decoration:none;font-weight:600;transition:.2s;
     }
-    .back:hover {opacity:.9;transform:translateY(-2px);}
+    .back:hover {opacity:.9;transform:translateY(-2px)}
+    footer {
+      margin-top:auto;text-align:center;font-size:13px;
+      color:#9ca3af;background:#f1f5f9;
+      padding:12px;border-top:1px solid var(--border);
+    }
+    [data-theme="dark"] footer {background:#1e293b;color:#cbd5e1}
+    .theme-toggle {margin-bottom:16px;text-align:center}
+    .btn {
+      appearance:none;border:none;cursor:pointer;font-weight:500;
+      border-radius:8px;padding:8px 14px;font-size:13px;
+      background:#fff;border:1px solid var(--border);color:var(--ink);
+    }
+    [data-theme="dark"] .btn {background:#0f172a;color:var(--ink);border-color:var(--border)}
+    .btn:hover {opacity:.9}
   </style>
 </head>
 <body>
-  <h1>❓ Aide – Générateur de QR Codes</h1>
+  <h1>❓ Aide – CreaQrcode</h1>
+
+  <div class="theme-toggle">
+    <button class="btn" onclick="toggleTheme()">🌙/☀️ Mode</button>
+  </div>
 
   <div class="card">
     <h2>⚡ Créer un QR Code</h2>
@@ -89,5 +106,25 @@
   <div style="text-align:center">
     <a href="index.html" class="back">⬅ Retour à l'application</a>
   </div>
+
+  <footer>
+    CreaQrcode – Équipe EPS Lycée Vauban – LUXEMBOURG – JB
+  </footer>
+
+  <script>
+    function toggleTheme(){
+      const html=document.documentElement;
+      const current=html.getAttribute('data-theme');
+      const next=current==='dark'?'light':'dark';
+      html.setAttribute('data-theme',next);
+      try{ localStorage.setItem('qr_theme_help',next);}catch(e){}
+    }
+    (function(){
+      try{
+        const t=localStorage.getItem('qr_theme_help');
+        if(t){ document.documentElement.setAttribute('data-theme',t);}
+      }catch(e){}
+    })();
+  </script>
 </body>
 </html>
